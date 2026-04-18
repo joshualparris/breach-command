@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0b1220" />
+<meta name="description" content="Breach Command — a tactical turn-based roguelike for the browser." />
+<title>Breach Command</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============================================================
+     TITLE SCREEN
+============================================================ -->
+<section id="screen-title" class="screen active" aria-label="Title screen">
+  <div class="title-wrap">
+    <h1 class="game-title">BREACH<span>COMMAND</span></h1>
+    <p class="tagline">Tactical incursion. Read the intent. Break their line.</p>
+    <div class="title-buttons">
+      <button id="btn-continue" class="btn btn-primary" hidden>Continue Run</button>
+      <button id="btn-new-run" class="btn btn-primary">New Run</button>
+      <button id="btn-help" class="btn">How to Play</button>
+    </div>
+    <p class="build-tag">v0.1 · prototype</p>
+  </div>
+</section>
+
+<!-- ============================================================
+     RUN MAP SCREEN
+============================================================ -->
+<section id="screen-map" class="screen" aria-label="Run map">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="btn btn-ghost" id="btn-map-menu" aria-label="Menu">☰</button>
+      <div class="run-stats">
+        <span class="stat"><span class="stat-label">Sector</span><span id="map-sector">1</span></span>
+        <span class="stat"><span class="stat-label">Scrap</span><span id="map-scrap">0</span></span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div id="squad-summary" class="squad-summary"></div>
+    </div>
+  </header>
+  <div class="map-wrap">
+    <canvas id="map-canvas" aria-label="Run map"></canvas>
+  </div>
+  <footer class="map-footer">
+    <p id="map-hint">Select a highlighted node to continue.</p>
+  </footer>
+</section>
+
+<!-- ============================================================
+     REWARD SCREEN
+============================================================ -->
+<section id="screen-reward" class="screen" aria-label="Reward selection">
+  <div class="panel panel-centered">
+    <h2 id="reward-title">Choose an Upgrade</h2>
+    <p id="reward-sub" class="muted">Pick one. The rest are lost.</p>
+    <div id="reward-options" class="reward-options"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     REST SCREEN
+============================================================ -->
+<section id="screen-rest" class="screen" aria-label="Repair bay">
+  <div class="panel panel-centered">
+    <h2>Repair Bay</h2>
+    <p class="muted">Quiet corridor. Take a breath.</p>
+    <div id="rest-options" class="reward-options"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     BATTLE SCREEN
+============================================================ -->
+<section id="screen-battle" class="screen" aria-label="Battle">
+  <header class="topbar battle-topbar">
+    <div class="topbar-left">
+      <button class="btn btn-ghost" id="btn-battle-menu" aria-label="Menu">☰</button>
+      <div class="turn-badge"><span class="stat-label">Turn</span><span id="turn-num">1</span></div>
+      <div class="phase-badge" id="phase-badge">Your Turn</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn" id="btn-undo" disabled>Undo</button>
+      <button class="btn btn-primary" id="btn-end-turn">End Turn</button>
+    </div>
+  </header>
+
+  <div class="battle-main">
+    <div class="board-wrap">
+      <canvas id="board-canvas" aria-label="Battle board"></canvas>
+      <div id="intent-layer" class="intent-layer" aria-hidden="true"></div>
+    </div>
+    <aside class="sidebar">
+      <div id="unit-panel" class="unit-panel">
+        <p class="muted small">Tap a unit to inspect.</p>
+      </div>
+      <div id="ability-bar" class="ability-bar"></div>
+      <div id="log" class="log" aria-live="polite"></div>
+    </aside>
+  </div>
+
+  <div id="battle-banner" class="battle-banner" hidden></div>
+</section>
+
+<!-- ============================================================
+     OVERLAYS
+============================================================ -->
+<div id="overlay-menu" class="overlay" hidden>
+  <div class="overlay-panel">
+    <h2>Menu</h2>
+    <button class="btn btn-block" id="btn-resume">Resume</button>
+    <button class="btn btn-block" id="btn-save">Save Run</button>
+    <button class="btn btn-block" id="btn-help-2">How to Play</button>
+    <button class="btn btn-block btn-danger" id="btn-abandon">Abandon Run</button>
+  </div>
+</div>
+
+<div id="overlay-help" class="overlay" hidden>
+  <div class="overlay-panel help-panel">
+    <h2>How to Play</h2>
+    <div class="help-body">
+      <p><b>Goal.</b> Push through the sector. Survive the final breach.</p>
+      <p><b>Turn flow.</b> Each turn your three units can <b>move</b> and take <b>one action</b>. Enemies show their <b>intent</b> before you commit. End your turn to resolve theirs.</p>
+      <p><b>Controls.</b> Tap a unit to select. Highlighted tiles show moves. Tap an ability, then a valid target. <b>Undo</b> reverts the current turn. Tap enemies to inspect intent.</p>
+      <p><b>Push &amp; pull.</b> Force movement into <b>walls</b>, <b>pits</b>, or <b>spikes</b> is extremely strong. Use it.</p>
+      <p><b>Hazards.</b> Pits drop units out. Spikes hurt on entry. Vents push any unit that ends a turn on them.</p>
+      <p><b>Between battles.</b> Pick upgrades, repair at rest stops, and plan your path. Elites hit harder but pay more.</p>
+    </div>
+    <button class="btn btn-block btn-primary" id="btn-close-help">Got it</button>
+  </div>
+</div>
+
+<div id="overlay-result" class="overlay" hidden>
+  <div class="overlay-panel">
+    <h2 id="result-title">Victory</h2>
+    <p id="result-body" class="muted"></p>
+    <div id="result-rewards"></div>
+    <button class="btn btn-block btn-primary" id="btn-result-next">Continue</button>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="content.js"></script>
+<script src="game.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
