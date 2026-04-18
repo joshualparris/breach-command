@@ -1238,7 +1238,13 @@ const Input = {
     const handler = (evt) => {
       evt.preventDefault();
       const rect = canvas.getBoundingClientRect();
-      const pt = evt.touches ? evt.touches[0] : evt;
+      let pt;
+      if (evt.type.startsWith('touch')) {
+        pt = (evt.changedTouches && evt.changedTouches[0]) || (evt.touches && evt.touches[0]);
+      } else {
+        pt = evt;
+      }
+      if (!pt) return;
       const px = pt.clientX - rect.left;
       const py = pt.clientY - rect.top;
       const cp = Renderer.cellPx;
@@ -1246,8 +1252,13 @@ const Input = {
       const y = Math.floor(py / cp);
       this.onBoardTap(x, y);
     };
-    canvas.addEventListener('click', handler);
-    canvas.addEventListener('touchend', handler);
+    if (window.PointerEvent) {
+      canvas.addEventListener('pointerup', handler);
+      canvas.addEventListener('pointerdown', evt => evt.preventDefault());
+    } else {
+      canvas.addEventListener('click', handler);
+      canvas.addEventListener('touchend', handler);
+    }
   },
 
   onBoardTap(x, y) {
@@ -1337,10 +1348,18 @@ const Input = {
   commitMove(x, y) {
     const battle = this.getBattle();
     const unit = this.selection.unit;
+    // Build path from unit to target using reachable BFS to get a real route
+    let path = this._bfsPath(battle, unit, x, y);
+    if (!path.length) {
+      // Guard against edge cases where the BFS route fails but the tapped tile is a valid adjacent move.
+      if (Math.abs(unit.x - x) + Math.abs(unit.y - y) === 1 && battle.isPassable(x, y, unit) && battle.tileRule(battle.tileAt(x, y)).id !== 'pit') {
+        path = [{ x, y }];
+      } else {
+        return;
+      }
+    }
     // Save undo snapshot FIRST — before mutation
     undoStack.push(battle.snapshot());
-    // Build path from unit to target using reachable BFS to get a real route
-    const path = this._bfsPath(battle, unit, x, y);
     battle.moveUnit(unit, path);
     unit.hasMoved = true;
     battle.checkResult();
