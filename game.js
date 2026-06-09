@@ -1864,6 +1864,55 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen?.();
+    return;
+  }
+  document.documentElement.requestFullscreen?.();
+}
+
+function renderGameToText() {
+  const run = UI.run;
+  const battle = UI.battle;
+  return JSON.stringify({
+    coordinateSystem: 'Battle grid origin is top-left; x increases right and y increases down.',
+    screen: UI.screen,
+    run: run ? {
+      seed: run.seed,
+      scrap: run.scrap,
+      relics: run.relics,
+      currentNodeId: run.currentNodeId,
+      visitedNodeIds: run.visitedNodeIds,
+      completed: run.completed,
+      defeated: run.defeated,
+      squad: run.squad.map((unit) => ({
+        id: unit.id,
+        classId: unit.classId,
+        hp: unit.hp,
+        maxHp: unit.maxHp
+      }))
+    } : null,
+    battle: battle ? {
+      templateId: battle.data.templateId,
+      turn: battle.data.turn,
+      phase: battle.phase,
+      result: battle.data.result,
+      units: battle.units.filter((unit) => unit.hp > 0).map((unit) => ({
+        id: unit.id,
+        team: unit.team,
+        classId: unit.classId,
+        kindId: unit.kindId,
+        hp: unit.hp,
+        maxHp: unit.maxHp,
+        x: unit.x,
+        y: unit.y,
+        intent: unit.intent?.desc || null
+      }))
+    } : null
+  });
+}
+
 /* =============================================================
    10. BOOTSTRAP
    ============================================================= */
@@ -1904,6 +1953,13 @@ function start() {
   document.getElementById('btn-help').addEventListener('click', () => UI.showHelp());
   document.getElementById('btn-help-2').addEventListener('click', () => UI.showHelp());
   document.getElementById('btn-close-help').addEventListener('click', () => UI.hideHelp());
+  document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+  document.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'f' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      toggleFullscreen();
+    }
+  });
 
   // Map menu
   document.getElementById('btn-map-menu').addEventListener('click', () => UI.showMenu());
@@ -1942,6 +1998,13 @@ function start() {
   // Startup state
   UI.showScreen('title');
   UI.refreshTitle();
+
+  window.render_game_to_text = renderGameToText;
+  window.advanceTime = () => {
+    if (UI.battle) UI.refreshBattle();
+    if (UI.run && UI.screen === 'map') UI.refreshMap();
+    return renderGameToText();
+  };
 }
 
 if (document.readyState === 'loading') {

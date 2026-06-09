@@ -42,10 +42,10 @@ global.setInterval = () => 0;
 global.confirm = () => true;
 
 // Load content first
-require('./content.js');
+require('../content.js');
 
 // Extract internal classes by injecting exposure hook
-let gameSrc = fs.readFileSync(path.join(__dirname, 'game.js'), 'utf8');
+let gameSrc = fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8');
 // Expose Battle, RunState, PhaseMachine, undoStack, Phases, UI, Input via global for test
 gameSrc = gameSrc.replace(
   '})();',

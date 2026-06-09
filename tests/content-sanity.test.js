@@ -3,7 +3,7 @@
 
 global.window = {};
 global.structuredClone = (o) => JSON.parse(JSON.stringify(o));
-require('./content.js');
+require('../content.js');
 const BC = global.window.BC;
 
 // Quick sanity checks on content tables

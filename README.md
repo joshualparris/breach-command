@@ -52,8 +52,14 @@ Because all asset paths are relative, the game is suitable for GitHub Pages repo
 
 - Best played in landscape during battles.
 - Touch controls are built into the UI.
+- Press `F` or use the title-screen button to toggle fullscreen.
 - The service worker enables basic offline caching after the first successful load.
 - Installability depends on browser support and how aggressively the browser accepts the manifest and service worker.
+
+## Runtime inspection
+
+- `window.render_game_to_text()` returns a concise JSON summary of the current run and battle.
+- `window.advanceTime(ms)` refreshes the current turn-based view and returns the same state summary for deterministic browser checks.
 
 ## What I tested here
 

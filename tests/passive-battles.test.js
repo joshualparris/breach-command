@@ -19,8 +19,8 @@ global.setTimeout = () => 0;
 global.requestAnimationFrame = (fn) => setTimeout(fn, 0);
 global.confirm = () => true;
 
-require('./content.js');
-let src = fs.readFileSync(path.join(__dirname, 'game.js'), 'utf8');
+require('../content.js');
+let src = fs.readFileSync(path.join(__dirname, '..', 'game.js'), 'utf8');
 src = src.replace('})();', 'global.__TEST = { Battle, RunState, PhaseMachine, Phases, SaveIO };\n})();');
 eval(src);
 
